@@ -33,6 +33,9 @@ def read_vcf_into_dataframe(filepath):
     df = pd.read_csv(filepath, sep = separator, skiprows=number)
     return df
 
+def extract_my_id(input_dataframe, column_to_extract):
+
+
 def make_exploded_dataframe(dataframe, val):
     ''' This function takes an input happy vcf dataframe and explodes the format column with metrics from another specified column'''
     #set a name for the new column to be added to the dataframe
