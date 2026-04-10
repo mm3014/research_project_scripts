@@ -1,5 +1,6 @@
 import pandas as pd
 import subprocess
+import numpy as np
 
 #read in vcf header
 def read_in_header (filepath):
@@ -24,11 +25,50 @@ def read_vcf_into_dataframe(filepath):
     df = pd.read_csv(filepath, sep = separator, skiprows=number)
     return df
 
-#populate a variant count into the id column
-def populate_id(input_dataframe):
-    #get the dataframe ID column
-    input_dataframe['ID'] = range(1,len(input_dataframe) + 1)
-    return input_dataframe
+#populate a string and number into a specific column
+def populate_id(input_dataframe, column_name, string):
+    #check if each value in a dataframe column is empty
+    changed_dataframe = input_dataframe
+    for index in range(0,len(changed_dataframe[column_name])):
+        value = changed_dataframe[column_name][index]
+        #if it is empty or a dot
+        if value == '' or value == '.':
+            #make the value a specified string + number ranging from 1 to length of dataframe
+            value = [f'{string}{i}' for i in range(1,len(changed_dataframe) + 1)]
+        #otherwise
+        else:
+            #make the value a string which is value + ';' + string to the 
+            value = [f'{value};{string}={i}' for i in range(1,len(changed_dataframe) + 1)]
+        changed_dataframe[column_name][index] = value
+    return changed_dataframe
+
+
+def populate_id(input_dataframe, column_name, string):
+    changed_dataframe = input_dataframe
+    #create an empty list for row indexes
+    row_indexes = []
+    for index in range(len(changed_dataframe)):
+        row_indexes.append(index)
+    #create an empty list for ID numbers
+    id_numbers = []
+    #list numbers from 1 to the length of the dataframe + 1. These will be the numbers assigned to each id.
+    for i in range(1,len(changed_dataframe)+1):
+        id_numbers.append(i)
+    #create an array of the list of id numbers 
+    id_array = np.array(id_numbers)
+    #create an array of the list of row indexes
+    row_index_array = np.array(row_indexes)
+    #create an array of the values at each row index of a specified column
+    column_values = changed_dataframe[column_name].iloc[row_index_array].values
+    #add the id numbers to the column values 
+    updated_column_values = column_values + f';{string}=' + id_array.astype(str)
+
+
+#USE NUMPY 
+
+
+
+
 
 #export as vcf again with the header
 def export_as_vcf(input_dataframe, header_only, output_filepath):
@@ -45,15 +85,15 @@ filepath = 'path/to/file'
 header_only = read_in_header(filepath)
 #read in the rest of the vcf to the dataframe
 vcf_dataframe = read_vcf_into_dataframe(filepath)
-#populate the ID column with a number
-populated_dataframe = populate_id(input_dataframe = vcf_dataframe)
+#populate each value in the INFO column with 'my_id={number from 1 to total number of rows}'
+populated_dataframe = populate_id(input_dataframe = vcf_dataframe, column_name = 'INFO', string = 'my_id')
 #split the filepath by / and get the last element of the list to use as the new filename
 current_filename = filepath.split('/')[-1]
 #get the rest of the filepath 
 rest_of_filename = "/".join(filepath.split("/")[:-1])
-#get the file_extension 
+#get the file_extension
 extension = current_filename.split('.')[-1]
 #construct a new filepath
-new_filename = f'{rest_of_filename}/{current_filename}_id.{extension}'
+new_filename = f'{rest_of_filename}/{current_filename}_info.{extension}'
 #export the populated vcf with its header to the original path
 export_as_vcf(input_dataframe = populated_dataframe, header_only = header_only , output_filepath = new_filename)
