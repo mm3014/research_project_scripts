@@ -25,24 +25,6 @@ def read_vcf_into_dataframe(filepath):
     df = pd.read_csv(filepath, sep = separator, skiprows=number)
     return df
 
-#populate a string and number into a specific column
-def populate_id(input_dataframe, column_name, string):
-    #check if each value in a dataframe column is empty
-    changed_dataframe = input_dataframe
-    for index in range(0,len(changed_dataframe[column_name])):
-        value = changed_dataframe[column_name][index]
-        #if it is empty or a dot
-        if value == '' or value == '.':
-            #make the value a specified string + number ranging from 1 to length of dataframe
-            value = [f'{string}{i}' for i in range(1,len(changed_dataframe) + 1)]
-        #otherwise
-        else:
-            #make the value a string which is value + ';' + string to the 
-            value = [f'{value};{string}={i}' for i in range(1,len(changed_dataframe) + 1)]
-        changed_dataframe[column_name][index] = value
-    return changed_dataframe
-
-
 def populate_id(input_dataframe, column_name, string):
     changed_dataframe = input_dataframe
     #create an empty list for row indexes
@@ -60,15 +42,17 @@ def populate_id(input_dataframe, column_name, string):
     row_index_array = np.array(row_indexes)
     #create an array of the values at each row index of a specified column
     column_values = changed_dataframe[column_name].iloc[row_index_array].values
-    #add the id numbers to the column values 
-    updated_column_values = column_values + f';{string}=' + id_array.astype(str)
-
-
-#USE NUMPY 
-
-
-
-
+    #create an array of updated column values
+    updated_column_values = np.where(
+        #any column values that are True for '.' or True for ''
+        (column_values == '.') | (column_values == ''),
+        #are updated with the string and id using this format
+        f'{string}' + id_array.astype(str),
+        #otherwise any columns values that are false for '.' or  '' are updated with the string and id using this format
+        column_values + f';{string}' + id_array.astype(str))
+    #update the changed dataframe column with the updated values
+    changed_dataframe[column_name] = updated_column_values
+    return changed_dataframe
 
 #export as vcf again with the header
 def export_as_vcf(input_dataframe, header_only, output_filepath):
@@ -86,7 +70,7 @@ header_only = read_in_header(filepath)
 #read in the rest of the vcf to the dataframe
 vcf_dataframe = read_vcf_into_dataframe(filepath)
 #populate each value in the INFO column with 'my_id={number from 1 to total number of rows}'
-populated_dataframe = populate_id(input_dataframe = vcf_dataframe, column_name = 'INFO', string = 'my_id')
+populated_dataframe = populate_id(input_dataframe = vcf_dataframe, column_name = 'INFO', string = 'my_id=')
 #split the filepath by / and get the last element of the list to use as the new filename
 current_filename = filepath.split('/')[-1]
 #get the rest of the filepath 
