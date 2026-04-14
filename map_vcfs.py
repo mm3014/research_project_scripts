@@ -1,7 +1,7 @@
 import pandas as pd
 import subprocess
 import argparse
-
+import numpy as np
 
 #CREATE ARGUMENT PARSER
 parser = argparse.ArgumentParser(
@@ -33,11 +33,37 @@ def read_vcf_into_dataframe(filepath):
     df = pd.read_csv(filepath, sep = separator, skiprows=number)
     return df
 
+def get_field(input_list, specific_string):
+    '''This function takes an input list and returns a value which starts with a specific string'''
+    #turn the list of split strings into an array
+    list_to_array = np.array(input_list)
+    #get an array of indexes of elements in the series which start with a specific string
+    array_of_indexes = np.where(np.char.startswith(list_to_array, f'{specific_string}'))[0]
+    #if the array is not empty
+    if array_of_indexes.size > 0:
+        #get the index as an integer
+        index_int = array_of_indexes[0]
+        #get the value at that index
+        value = input_list[index_int]
+    else:
+    #set value to None
+        value = None
+    return value
+
+def extract_my_id(input_dataframe, column_to_extract, new_column):
+    '''This function takes an input dataframe, extracts a specific string from a string within a column and puts the extracted string in its own column'''
+    #make a new dataframe column
+    input_dataframe[f'{new_column}'] = (input_dataframe[f'{column_to_extract}'].str.split(';')
+        #containing a specific string extracted from the current string value                         
+        .apply(lambda lst: get_field(input_list=lst, specific_string=new_column)))
+    return input_dataframe
+
 def make_exploded_dataframe(dataframe):
     #get format column name
     format_col_name = dataframe.columns[-2]
     #get end column name
     end_col_name = dataframe.columns[-1]
+    #get info
     #create a new dataframe with an added columns
     exploded_dataframe = (dataframe.assign(
                             #containing each split value in the format string
@@ -62,11 +88,6 @@ def pivot_dataframe (input_dataframe, metric_column, value_column):
     final_df = original_cols.merge(wide_df,left_index = True,right_index = True,how = "left")
     return final_df
 
-#'''This function gets all of the column names from a dataframe'''
-#def get_column_names(input_dataframe): 
-    names = input_dataframe.columns
-    return names
-
 def write_dataframe_to_tsv(dataframe_to_write, write_to):
     '''this function takes an input dataframe and writes it to a tsv file with the specified name'''
     dataframe_to_write.to_csv(write_to, index = False, sep = '\t')
@@ -80,8 +101,10 @@ def vcf_to_dataframe(input_vcf, output_file):
     exploded_df = make_exploded_dataframe(dataframe = df)
     #aggregate to collapse rows again 
     pivoted_df = pivot_dataframe(input_dataframe = exploded_df, metric_column = 'format_val', value_column = 'end_val')
+    #extract the my_id value from the the INFO column and put it in its own column.
+    id_dataframe = extract_my_id(input_dataframe = pivoted_df , column_to_extract = 'INFO', new_column = 'my_id')
     #write the final dataframe to a csv file
-    write_dataframe_to_tsv(dataframe_to_write = pivoted_df, write_to = output_file)
+    write_dataframe_to_tsv(dataframe_to_write = id_dataframe, write_to = output_file)
 
 
 #MAIN
