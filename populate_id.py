@@ -85,6 +85,6 @@ rest_of_filename = "/".join(filepath.split("/")[:-1])
 #get the file_extension
 extension = current_filename.split('.')[-1]
 #construct a new filepath
-new_filename = f'{rest_of_filename}/{current_filename}_info.{extension}'
+new_filename = f'{rest_of_filename}/{current_filename}_info_passonly.{extension}'
 #export the populated vcf with its header to the original path
 export_as_vcf(input_dataframe = populated_dataframe, header_only = header_only , output_filepath = new_filename)
