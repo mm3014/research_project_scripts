@@ -25,6 +25,11 @@ def read_vcf_into_dataframe(filepath):
     df = pd.read_csv(filepath, sep = separator, skiprows=number)
     return df
 
+def pass_only(df, column_name, keep_value):
+    '''this function takes an input dataframe and filters by a specific column value'''
+    filtered_df = df[df[column_name] == keep_value]
+    return filtered_df
+
 def populate_id(input_dataframe, column_name, string):
     changed_dataframe = input_dataframe
     #create an empty list for row indexes
@@ -69,6 +74,8 @@ filepath = 'path/to/file'
 header_only = read_in_header(filepath)
 #read in the rest of the vcf to the dataframe
 vcf_dataframe = read_vcf_into_dataframe(filepath)
+#filter the filter column to keep only 'PASS'
+pass_only_df = pass_only(df = vcf_dataframe, column_name = 'FILTER', keep_value = 'PASS')
 #populate each value in the INFO column with 'my_id={number from 1 to total number of rows}'
 populated_dataframe = populate_id(input_dataframe = vcf_dataframe, column_name = 'INFO', string = 'my_id=')
 #split the filepath by / and get the last element of the list to use as the new filename
