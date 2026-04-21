@@ -77,7 +77,7 @@ vcf_dataframe = read_vcf_into_dataframe(filepath)
 #filter the filter column to keep only 'PASS'
 pass_only_df = pass_only(df = vcf_dataframe, column_name = 'FILTER', keep_value = 'PASS')
 #populate each value in the INFO column with 'my_id={number from 1 to total number of rows}'
-populated_dataframe = populate_id(input_dataframe = vcf_dataframe, column_name = 'INFO', string = 'my_id=')
+populated_dataframe = populate_id(input_dataframe = pass_only_df, column_name = 'INFO', string = 'my_id=')
 #split the filepath by / and get the last element of the list to use as the new filename
 current_filename = filepath.split('/')[-1]
 #get the rest of the filepath 
