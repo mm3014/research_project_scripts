@@ -1,6 +1,7 @@
 import pandas as pd
 import argparse
-import subprocess 
+import subprocess
+import numpy as np
 
 #CREATE ARGUMENT PARSER
 parser = argparse.ArgumentParser(
@@ -33,9 +34,31 @@ def read_vcf_into_dataframe(filepath):
     df = pd.read_csv(filepath, sep = separator, skiprows=number)
     return df
 
-def extract_my_id(input_dataframe, column_to_extract):
+def get_field(input_list, specific_string):
+    '''This function takes an input list and returns a value which starts with a specific string'''
+    #turn the list of split strings into an array
+    list_to_array = np.array(input_list)
+    #get an array of indexes of elements in the series which start with a specific string
+    array_of_indexes = np.where(np.char.startswith(list_to_array, f'{specific_string}'))[0]
+    #if the array is not empty
+    if array_of_indexes.size > 0:
+        #get the index as an integer
+        index_int = array_of_indexes[0]
+        #get the value at that index
+        value = input_list[index_int]
+    else:
+    #set value to None
+        value = None
+    return value
 
-
+def extract_my_id(input_dataframe, column_to_extract, new_column):
+    '''This function takes an input dataframe, extracts a specific string from a string within a column and puts the extracted string in its own column'''
+    #make a new dataframe column
+    input_dataframe[f'{new_column}'] = (input_dataframe[f'{column_to_extract}'].str.split(';')
+        #containing a specific string extracted from the current string value                         
+        .apply(lambda lst: get_field(input_list=lst, specific_string=new_column)))
+    return input_dataframe
+          
 def make_exploded_dataframe(dataframe, val):
     ''' This function takes an input happy vcf dataframe and explodes the format column with metrics from another specified column'''
     #set a name for the new column to be added to the dataframe
@@ -73,8 +96,10 @@ def write_dataframe_to_tsv(dataframe_to_write, write_to):
 def happy_vcf_to_tsv(filepath, output_file):
     #read happy results vcf into a dataframe
     read_in_vcf = read_vcf_into_dataframe(filepath)
+    #extract the my_id from the info column and add it to its own column in the dataframe
+    dataframe_with_id = extract_my_id(input_dataframe = read_in_vcf, column_to_extract = 'INFO', new_column = 'my_id')
     #explode the TRUTH and FORMAT columns in the happy results dataframe
-    exploded_dataframe = make_exploded_dataframe(dataframe = read_in_vcf, val = 'TRUTH')
+    exploded_dataframe = make_exploded_dataframe(dataframe = dataframe_with_id, val = 'TRUTH')
     #pivot dataframe to include the TRUTH metrics in columns
     pivoted_dataframe = pivot_dataframe(input_dataframe = exploded_dataframe, metric_column = 'FORMAT_val', value_column = 'TRUTH_val')
     #explode QUERY and FORMAT columns in the pivoted dataframe
