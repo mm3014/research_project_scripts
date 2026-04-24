@@ -1,6 +1,25 @@
 import pandas as pd
 import subprocess
 import numpy as np
+import argparse
+
+#CREATE ARGUMENT PARSER
+parser = argparse.ArgumentParser(
+    prog='Populate IDs', 
+    description = 'Takes an input vcf, filters for PASS only, adds a random ID to the INFO column and outputs an updated vcf'
+)
+
+def name_path_pair(arg):
+    '''Convert variant caller name:path from '--vcf_file' argument into ('name', 'path'). This is needed to make sure that the vcfs are input in the correct format'''
+    if ':' not in arg:
+        raise argparse.ArgumentTypeError("Input must be in name:path format")
+    name = arg.split(':', 1)[0]
+    path = arg.split(':', 1)[1]
+    return name, path
+
+parser.add_argument('--vcf_file',type=name_path_pair, action='append', help='input the variant caller name and the filepath in name:path format')
+parser.add_argument('--output', default='./',type=str, help= 'filepath to output dataframe files to')
+args = parser.parse_args()
 
 #read in vcf header
 def read_in_header (filepath):
@@ -67,8 +86,11 @@ def export_as_vcf(input_dataframe, header_only, output_filepath):
         #write the dataframe without the header
         input_dataframe.to_csv(out, sep="\t", index=False, header=False)
 
+for element in args.vcf_file:
+    caller_name = element[0]
+    filepath = element[1]
 
-filepath = 'path/to/file'
+output_directory = args.output
 
 #read in the header
 header_only = read_in_header(filepath)
@@ -80,11 +102,8 @@ pass_only_df = pass_only(df = vcf_dataframe, column_name = 'FILTER', keep_value 
 populated_dataframe = populate_id(input_dataframe = pass_only_df, column_name = 'INFO', string = 'my_id=')
 #split the filepath by / and get the last element of the list to use as the new filename
 current_filename = filepath.split('/')[-1]
-#get the rest of the filepath 
-rest_of_filename = "/".join(filepath.split("/")[:-1])
-#get the file_extension
-extension = current_filename.split('.')[-1]
 #construct a new filepath
-new_filename = f'{rest_of_filename}/{current_filename}_info_passonly.{extension}'
+new_filename = f'{output_directory}/info_passonly_{current_filename}'
 #export the populated vcf with its header to the original path
+print(f'writing {caller_name} updated vcf to {new_filename}')
 export_as_vcf(input_dataframe = populated_dataframe, header_only = header_only , output_filepath = new_filename)
