@@ -119,4 +119,5 @@ for element in args.vcf_file:
     #create a name for the output dataframe files
     output_file_path= f'{OUTPUT_FILE_PATH_ARG}/{caller_name}_exploded_happy_dataframe.tsv'
     #write to dataframe
+    print(f'writing happy results as an exploded dataframe to {output_file_path}')
     happy_vcf_to_tsv(filepath = happy_vcf_filepath, output_file = output_file_path)
