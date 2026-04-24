@@ -38,8 +38,8 @@ def create_unique_column(input_dataframe, list_of_columns):
             )
     return input_dataframe
 
-def merge_on_unique(df1, df2):
-    result = pd.merge(df1, df2, how  = 'outer', on = 'unique_column', suffixes = ('_res', '_hap'))
+def merge_on_column(df1, df2, column):
+    result = pd.merge(df1, df2, how  = 'outer', on = column, suffixes = ('_res', '_hap'))
     return result
 
 def write_dataframe_to_tsv(dataframe_to_write, write_to):
@@ -67,10 +67,10 @@ for element in args.input:
     #add a new column in happy vcf dataframe with merged data from #CHROM, POS, REF and ALT columns
     unique_col_happy_vcf_dataframe = create_unique_column(input_dataframe = happy_vcf_dataframe, list_of_columns = ['#CHROM', 'POS', 'REF', 'ALT'])
     #merge the results dataframe and happy vcf dataframe on the unique columns just made
-    merged_df = merge_on_unique(df1 = unique_col_dataframe, df2 = unique_col_happy_vcf_dataframe)
+    merged_df = merge_on_column(df1 = unique_col_dataframe, df2 = unique_col_happy_vcf_dataframe, column = 'my_id')
     #create file path to write dataframe to
     output_file_path= f'{OUTPUT_FILE_PATH_ARG}/{caller_name}_merged_happy_dataframe.tsv'
     #printing message
-    print(f'writing CALLERNAME {caller_name}')
+    print(f'writing {caller_name} merged dataframe to {output_file_path}')
     #write dataframe to file
     write_dataframe_to_tsv(dataframe_to_write = merged_df, write_to = output_file_path)
