@@ -103,7 +103,7 @@ populated_dataframe = populate_id(input_dataframe = pass_only_df, column_name = 
 #split the filepath by / and get the last element of the list to use as the new filename
 current_filename = filepath.split('/')[-1]
 #construct a new filepath
-new_filename = f'{output_directory}/info_passonly_{current_filename}'
+new_filename = f'{output_directory}/info_passonly.vcf'
 #export the populated vcf with its header to the original path
 print(f'writing {caller_name} updated vcf to {new_filename}')
 export_as_vcf(input_dataframe = populated_dataframe, header_only = header_only , output_filepath = new_filename)
