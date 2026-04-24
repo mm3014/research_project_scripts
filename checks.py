@@ -54,32 +54,22 @@ def get_df_column(dictionary, key, column_name):
 
 #NEED TO CHANGE THIS
 def compare_column_values(dictionary, key1, key2, column1, column2, in_or_not_in): 
-    #turn column 1 into an array. Make sure that each array is string type
-    array1 = np.array(get_df_column(dictionary, key = key1, column_name = column1)).astype(str)
-    #turn column 2 into an array. Make sure that each array is string type
-    array2 = np.array(get_df_column(dictionary, key = key2, column_name = column2)).astype(str)
-    #if checking whether array1 values are not in array2
+    #get column1 from the dataframe
+    series1 = get_df_column(dictionary, key=key1, column_name=column1).astype(str)
+    #get column2 from the dataframe
+    series2 = get_df_column(dictionary, key=key2, column_name=column2).astype(str)
+    #if in_or_not_in is set to 'not_in'
     if in_or_not_in == 'not_in':
-        #see whether array1 values are not in array2. Return True for those not in array2
-        not_in_array2 = np.isin(array1, array2, invert = True)
-        #return the indices where the condition is True. True means not in array2
-        indices = np.where(not_in_array2)[0]
-        #get a list of the actual values in array1 that that aren't in array2
-        values = array1[indices].tolist()
-    #if checking whether array1 values are in array2
+        #get a boolean mask. True means the value in series 1 is not in series 2
+        mask = ~series1.isin(series2)
+    #if in_or_not_in is set to 'in'    
     elif in_or_not_in == 'in':
-        #see whether array1 values are in array2. Return True for those in array2.
-        in_array2 = np.isin(array1, array2)
-        #return the indices where the condition is True. True means in array2
-        indices = np.where(in_array2)[0]
-        #get the actual values in df1 that that are in array2
-        values = array1[indices].tolist()
+        #get a boolean mask. True means the value is series 1 is in series 2
+        mask = series1.isin(series2)
     else:
-        values = print('something went wrong')
-    #return a dataframe with rows where column1 has been filtered to include only the values returned
-    df1 = fetch_relevant_dataframe(dictionary, key = key1)
-    dataframe_to_return = df1.loc[df1[column1].isin(values)]
-    return values, dataframe_to_return
+        raise ValueError("in_or_not_in must be 'in' or 'not_in'")
+    values = series1[mask]
+    return values
 
 def count_rows (input_dataframe, to_count):
     #count the length of the dataframe
@@ -115,14 +105,21 @@ files_df.index = [
 data_dictionary = create_data_dictionary(dataframe_of_files = files_df)
 #create the count dictionary
 count_dictionary = create_count_dictionary(dictionary = data_dictionary)
+
+#CHECK FOR IDS THAT ARE IN THE RESULTS THAT ARE NOT IN HAPPY
 #get my_id values in results_df not in happy_exploded_df. in_or_not_in must be 'in' or 'not_in'. We want this to be 0 to show that all variants in my vcf have been accounted for.
-myid_not_in_happy = compare_column_values(dictionary = data_dictionary, key1 = 'results_df' , key2 = 'happy_exploded_df', column1 = 'my_id', column2 = 'my_id', in_or_not_in = 'not_in')[0]
-#check how many variants there are in happy that aren't in the resutls dtaframe
-myid_not_in_res = compare_column_values(dictionary = data_dictionary, key1 = 'happy_exploded_df' , key2 = 'results_df', column1 = 'my_id', column2 = 'my_id', in_or_not_in = 'not_in')[0]
-#get a dataframe of my_id not in results_df not in happy_exploded_df. in_or_not_in must be 'in' or 'not_in'
-df_myid_not_in_happy = compare_column_values(dictionary = data_dictionary, key1 = 'results_df' , key2 = 'happy_exploded_df', column1 = 'my_id', column2 = 'my_id', in_or_not_in = 'not_in')[1]
-#filter merged_df by my_id not in happy
-merged_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'merged_df')
-filtered_mergeddf = merged_df.loc[merged_df['my_id_res'].isin(myid_not_in_happy)]
+myid_not_in_happy = compare_column_values(dictionary = data_dictionary, key1 = 'results_df' , key2 = 'happy_exploded_df', column1 = 'my_id', column2 = 'my_id', in_or_not_in = 'not_in')
+#get the results dataframe 
+results_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'results_df')
+#get records from the results dataframe that were not in happy
+filtered_df_res = results_df.loc[myid_not_in_happy.index]
 
-
+#CHECK FOR IDS THAT ARE IN HAPPY AND NOT IN THE RESULTS
+#get my_ids in happy that are not in res
+not_in_res = compare_column_values(dictionary = data_dictionary, key1 = 'happy_exploded_df' , key2 = 'results_df', column1 = 'my_id', column2 = 'my_id', in_or_not_in = 'not_in')
+#get happy dataframe
+happy_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'happy_exploded_df')
+#get records from happy dataframe not in results
+filtered_df_hap = happy_df.loc[not_in_res.index]
+#check the unique values in this dataframe's TRUTH_BD column
+unique_values = filtered_df_hap['TRUTH_BD'].value_counts()
