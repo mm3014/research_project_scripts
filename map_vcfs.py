@@ -118,6 +118,7 @@ for element in args.vcf_file:
     input_vcf = element[1]
     #create a name for the output dataframe files
     output_file_path= f'{OUTPUT_FILE_PATH_ARG}/{caller_name}_dataframe.tsv'
+    print(f'writing mapped results vcf to {output_file_path}')
     #write to dataframe
     vcf_to_dataframe(input_vcf= input_vcf, output_file = output_file_path)
 
