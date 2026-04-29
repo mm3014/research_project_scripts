@@ -39,13 +39,42 @@ def create_unique_column(input_dataframe, list_of_columns):
     return input_dataframe
 
 def merge_on_column(df1, df2, column):
-    result = pd.merge(df1, df2, how  = 'outer', on = column, suffixes = ('_res', '_hap'))
+    result = pd.merge(df1, df2, how  = 'outer', on = column, suffixes = ('_res', '_hap'), indicator=True)
     return result
+
+def clean_up(dataframe):
+    #add a column to join query and truth results together in a final results column
+    merged_df['result'] = (merged_df['TRUTH_BD'].fillna('').astype(str) + ','+ merged_df['QUERY_BD'].fillna('').astype(str)).str.strip(',')
+    #get a list of unique results 
+    result_column_vals = merged_df['result'].unique()
+    #create a dictionary to map old values with new values
+    replace_map = {}
+    #Loop over each value in the results column
+    for val in result_column_vals:
+        #if the value isn't empty 
+        if val:
+            #Split the string on commas
+            #remove empty strings
+            #remove "."
+            parts = [
+                x for x in val.split(",")
+                if x and x != "."
+            ]
+            #Remove duplicates while preserving order. dict.fromkeys(...) keeps unique values in their original order
+            cleaned = ",".join(dict.fromkeys(parts))
+            #Store the original value and its cleaned replacement in the dictionary
+            replace_map[val] = cleaned
+    #apply the cleaned dictionary to the results column
+    merged_df["result"] = merged_df["result"].replace(replace_map)
+
+
+
+    
+
 
 def write_dataframe_to_tsv(dataframe_to_write, write_to):
     '''this function takes an input dataframe and writes it to a tsv file with the specified name'''
     dataframe_to_write.to_csv(write_to, index = False, sep = '\t')
-
 
 #MAIN
 OUTPUT_FILE_PATH_ARG = args.output 
@@ -61,13 +90,13 @@ for element in args.input:
     #read in results dataframe
     results_dataframe = read_dataframe(dataframe_filepath = input_results_dataframe)
     #add a new column in results dataframe with merged data from #CHROM, POS, REF and ALT columns
-    unique_col_dataframe = create_unique_column(input_dataframe = results_dataframe, list_of_columns = ['#CHROM', 'POS', 'REF', 'ALT'])
+    #unique_col_dataframe = create_unique_column(input_dataframe = results_dataframe, list_of_columns = ['#CHROM', 'POS', 'REF', 'ALT'])
     #read in happy vcf dataframe
     happy_vcf_dataframe = read_dataframe(dataframe_filepath = happy_results_dataframe)
     #add a new column in happy vcf dataframe with merged data from #CHROM, POS, REF and ALT columns
-    unique_col_happy_vcf_dataframe = create_unique_column(input_dataframe = happy_vcf_dataframe, list_of_columns = ['#CHROM', 'POS', 'REF', 'ALT'])
+    #unique_col_happy_vcf_dataframe = create_unique_column(input_dataframe = happy_vcf_dataframe, list_of_columns = ['#CHROM', 'POS', 'REF', 'ALT'])
     #merge the results dataframe and happy vcf dataframe on the unique columns just made
-    merged_df = merge_on_column(df1 = unique_col_dataframe, df2 = unique_col_happy_vcf_dataframe, column = 'my_id')
+    merged_df = merge_on_column(df1 = results_dataframe, df2 = happy_vcf_dataframe, column = 'my_id')
     #create file path to write dataframe to
     output_file_path= f'{OUTPUT_FILE_PATH_ARG}/{caller_name}_merged_happy_dataframe.tsv'
     #printing message
