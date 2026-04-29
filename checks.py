@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import subprocess 
 
-def read_in_dataframe(filepath, separator):
-    df = pd.read_csv(filepath, sep = separator)
+def read_in_dataframe(filepath, separator, header):
+    df = pd.read_csv(filepath, sep = separator, header = header)
     return df
 
 def read_vcf_into_dataframe(filepath):
@@ -34,7 +34,12 @@ def create_data_dictionary(dataframe_of_files):
         #if path ends with .tsv
         elif path.endswith('.tsv'):
         #use the read_in_dataframe function to read it into a dataframe
-            df = read_in_dataframe(filepath = path, separator = '\t')
+            df = read_in_dataframe(filepath = path, separator = '\t', header = 0)
+            dictionary.setdefault(key, {}).update({'Dataframe': df})
+        #if path ends with .bed
+        elif path.endswith('.bed'):
+        #use the read_in_dataframe function to read it into a dataframe
+            df = read_in_dataframe(filepath = path, separator = '\t', header = None)
             dictionary.setdefault(key, {}).update({'Dataframe': df})
         else:
             print('something went wrong')
@@ -52,7 +57,6 @@ def get_df_column(dictionary, key, column_name):
     column = df_to_search.loc[:, column_name]
     return column
 
-#NEED TO CHANGE THIS
 def compare_column_values(dictionary, key1, key2, column1, column2, in_or_not_in): 
     #get column1 from the dataframe
     series1 = get_df_column(dictionary, key=key1, column_name=column1).astype(str)
@@ -89,8 +93,31 @@ def create_count_dictionary (dictionary):
             count_dict.setdefault(key, {}).update({'total_variants': number_of_rows})
     return count_dict
 
+def write_dataframe_to_tsv(dataframe_to_write, write_to, header):
+    '''this function takes an input dataframe and writes it to a tsv file with the specified name'''
+    dataframe_to_write.to_csv(write_to, index = False, header = header, sep = '\t')
+
+def make_bed (dataframe, output_directory):
+    #get the records only in happy 
+    filtered_left = dataframe.loc[dataframe['_merge'] == 'left_only']
+    #make a copy of the dataframe with just the chromosome and position column
+    bed_subset = filtered_left[['#CHROM_res', 'POS_res']].copy()
+    #convert to integer to drop the .0 decimal 
+    bed_subset['POS_res'] = (bed_subset['POS_res'].round(0).astype(int))
+    #make a copy of the POS_res column to act as the end position column needed for a bed file
+    bed_subset['POS_res_copy'] = bed_subset['POS_res'].copy()
+    #construct the output filepath
+    output_file_path = f'{output_directory}/not_in_happy.bed'
+    print(f'writing bed to {output_file_path}')
+    #write out the bed file
+    write_dataframe_to_tsv(dataframe_to_write = bed_subset, write_to = output_file_path, header = 0)
+
+################ MAIN ########################
+
+working_directory = '/path_to/intersected_once'
+
 #read in the csv file list of the files to create a dictionary out of
-files_df = read_in_dataframe(filepath = '/pathto/deepvariant_files.csv', separator = ',')
+files_df = read_in_dataframe(filepath = f'{working_directory}/deepvariant_files.csv', separator = ',', header = 0)
 #rename the indexes in the dataframe. These will be the keys in my dictionary with each key relating to each file. MUST BE IN THE SAME ORDER AS THE FILES
 files_df.index = [
     "caller_vcf",
@@ -99,20 +126,46 @@ files_df.index = [
     "happy_vcf",
     "happy_exploded_df",
     "merged_df",
+    "GIAB_bed"
 ]
-
+ 
 #create the data dictionary containing filepath, description of file and file read into a dataframe
 data_dictionary = create_data_dictionary(dataframe_of_files = files_df)
 #create the count dictionary
 count_dictionary = create_count_dictionary(dictionary = data_dictionary)
 
+#get the merged dataframe
+merged_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'merged_df')
+#make a bed file of only the variants in happy 
+make_bed(dataframe = merged_df, output_directory = working_directory)
+
+##### NOW DO SUBPROCESS FOR COMMAND WITH INTERSECT BED. USE THE GIAB FILEPATH IN THE DICTIONARY
+
+#add a column to put review status as checked for any variant where '_merge' column says 'both'
+merged_df.loc[merged_df['_merge'] == 'both', 'status'] = 'checked'
+
+
 #CHECK FOR IDS THAT ARE IN THE RESULTS THAT ARE NOT IN HAPPY
 #get my_id values in results_df not in happy_exploded_df. in_or_not_in must be 'in' or 'not_in'. We want this to be 0 to show that all variants in my vcf have been accounted for.
 myid_not_in_happy = compare_column_values(dictionary = data_dictionary, key1 = 'results_df' , key2 = 'happy_exploded_df', column1 = 'my_id', column2 = 'my_id', in_or_not_in = 'not_in')
+#get the merged_dataframe
+
+
+         
+         
+
+
 #get the results dataframe 
 results_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'results_df')
 #get records from the results dataframe that were not in happy
 filtered_df_res = results_df.loc[myid_not_in_happy.index]
+ 
+#get the merged_dataframe
+merged_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'merged_df')
+
+
+#get the records only in our results
+filtered_right = merged_df.loc[merged_df['_merge'] == 'right_only']
 
 #CHECK FOR IDS THAT ARE IN HAPPY AND NOT IN THE RESULTS
 #get my_ids in happy that are not in res
@@ -123,3 +176,6 @@ happy_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'happy_e
 filtered_df_hap = happy_df.loc[not_in_res.index]
 #check the unique values in this dataframe's TRUTH_BD column
 unique_values = filtered_df_hap['TRUTH_BD'].value_counts()
+
+
+#fetch dataframe and update rows 
