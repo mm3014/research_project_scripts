@@ -18,7 +18,7 @@ def name_path_pair(arg):
     return name, path
 
 parser.add_argument('--vcf_file',type=name_path_pair, action='append', help='input the variant caller name and the filepath in name:path format')
-parser.add_argument('--output', default='./',type=str, help= 'filepath to output dataframe files to')
+parser.add_argument('--output_dir', default='./',type=str, help= 'directory to output vcf to')
 args = parser.parse_args()
 
 #read in vcf header
@@ -90,7 +90,7 @@ for element in args.vcf_file:
     caller_name = element[0]
     filepath = element[1]
 
-output_directory = args.output
+output_directory = args.output_dir
 
 #read in the header
 header_only = read_in_header(filepath)
@@ -101,7 +101,7 @@ pass_only_df = pass_only(df = vcf_dataframe, column_name = 'FILTER', keep_value 
 #populate each value in the INFO column with 'my_id={number from 1 to total number of rows}'
 populated_dataframe = populate_id(input_dataframe = pass_only_df, column_name = 'INFO', string = 'my_id=')
 #split the filepath by / and get the last element of the list to use as the new filename
-current_filename = filepath.split('/')[-1]
+#current_filename = filepath.split('/')[-1]
 #construct a new filepath
 new_filename = f'{output_directory}/info_passonly.vcf'
 #export the populated vcf with its header to the original path
