@@ -1,6 +1,23 @@
 import pandas as pd
 import numpy as np
-import subprocess 
+import subprocess
+import argparse
+
+#CREATE ARGUMENT PARSER
+parser = argparse.ArgumentParser(
+    prog='DataframeChecks')
+
+def name_path_pair(arg):
+    '''Convert caller name:path from '--input' argument into ('name', 'path'). This is needed to make sure the input is in the correct format'''
+    if ':' not in arg:
+        raise argparse.ArgumentTypeError("Input must be in name:path format")
+    name = arg.split(':', 1)[0]
+    path = arg.split(':', 1)[1]
+    return name, path
+
+parser.add_argument('--files_list',type=name_path_pair, action='append', help='input the variant caller name and the filepath to file list (csv) in name:path format')
+parser.add_argument('--working_dir', default='./',type=str, help= 'directory to output dataframe files to')
+args = parser.parse_args()
 
 def read_in_dataframe(filepath, separator, header):
     df = pd.read_csv(filepath, sep = separator, header = header)
@@ -144,13 +161,18 @@ def run_intersect(filepath_sample, filepath_bed, output_directory, bedtools_flag
 
 ################ MAIN ########################
 
-working_directory = '/path_to/intersected_once'
+#get the filepath and the caller name
+for element in args.files_list:
+    caller_name = element[0]
+    path_to_files = element[1]
+
+working_directory = args.working_directory
 
 #read in the csv file list of the files to create a dictionary out of
-files_df = read_in_dataframe(filepath = f'{working_directory}/deepvariant_files.csv', separator = ',', header = 0)
+files_df = read_in_dataframe(filepath = f'{path_to_files}', separator = ',', header = 0)
 #rename the indexes in the dataframe. These will be the keys in my dictionary with each key relating to each file. MUST BE IN THE SAME ORDER AS THE FILES
 files_df.index = [
-    "caller_vcf",
+    "caller_output",
     "vcf_with_ids",
     "results_df", #pass only
     "happy_vcf",
@@ -200,3 +222,5 @@ filtered_left = merged_df.loc[merged_df['_merge'] == 'left_only'].index
 not_overlap_indexes = filtered_left.difference(row_ids)
 #update df
 merged_df.loc[not_overlap_indexes, 'status'] = 'not_in_giab'
+
+write_dataframe_to_tsv(dataframe_to_write = merged_df, write_to = f'{working_directory}/{caller_name}_checked_dataframe.tsv', header = 0)
