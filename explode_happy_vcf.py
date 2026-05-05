@@ -18,7 +18,7 @@ def name_path_pair(arg):
     return name, path
 
 parser.add_argument('--vcf_file',type=name_path_pair, action='append', help='input the variant caller name and the filepath to the results vcf in name:path format')
-parser.add_argument('--output', default='./',type=str, help= 'filepath to output dataframe files to')
+parser.add_argument('--output_dir', default='./',type=str, help= 'directory to output dataframe files to')
 args = parser.parse_args()
 
 #DEFINE FUNCTIONS
@@ -110,14 +110,14 @@ def happy_vcf_to_tsv(filepath, output_file):
     write_dataframe_to_tsv(dataframe_to_write = final_pivoted_dataframe, write_to = output_file)
 
 #MAIN
-OUTPUT_FILE_PATH_ARG = args.output
+OUTPUT_DIRECTORY = args.output_dir
 
 #get the caller name and input vcf filepath for each caller from the arg input
 for element in args.vcf_file:
     caller_name = element[0]
     happy_vcf_filepath = element[1]
     #create a name for the output dataframe files
-    output_file_path= f'{OUTPUT_FILE_PATH_ARG}/{caller_name}_exploded_happy_dataframe.tsv'
+    output_file_path= f'{OUTPUT_DIRECTORY}/{caller_name}_exploded_happy_dataframe.tsv'
     #write to dataframe
     print(f'writing happy results as an exploded dataframe to {output_file_path}')
     happy_vcf_to_tsv(filepath = happy_vcf_filepath, output_file = output_file_path)
