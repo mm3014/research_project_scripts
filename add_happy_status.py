@@ -18,7 +18,7 @@ def separate_input_pair(arg):
     return input1, input2, input3
 
 parser.add_argument('--input',type=separate_input_pair, action='append', help='input the variant caller, filepath to the metrics dataframe and the filepath to the happy results vcf dataframe in caller_name:path/to/dataframe:filepath/to/happy_results_dataframe format')
-parser.add_argument('--output', default='./',type=str, help= 'filepath to output dataframe files to')
+parser.add_argument('--output_dir', default='./',type=str, help= 'directory to output dataframes to')
 args = parser.parse_args()
 
 #read in dataframe
@@ -77,7 +77,7 @@ def write_dataframe_to_tsv(dataframe_to_write, write_to):
     dataframe_to_write.to_csv(write_to, index = False, sep = '\t')
 
 #MAIN
-OUTPUT_FILE_PATH_ARG = args.output 
+OUTPUT_DIRECTORY = args.output_dir
 
 #iterate through the input argument paris
 for element in args.input:
@@ -98,7 +98,7 @@ for element in args.input:
     #merge the results dataframe and happy vcf dataframe on the unique columns just made
     merged_df = merge_on_column(df1 = results_dataframe, df2 = happy_vcf_dataframe, column = 'my_id')
     #create file path to write dataframe to
-    output_file_path= f'{OUTPUT_FILE_PATH_ARG}/{caller_name}_merged_happy_dataframe.tsv'
+    output_file_path= f'{OUTPUT_DIRECTORY}/{caller_name}_merged_happy_dataframe.tsv'
     #printing message
     print(f'writing {caller_name} merged dataframe to {output_file_path}')
     #write dataframe to file
