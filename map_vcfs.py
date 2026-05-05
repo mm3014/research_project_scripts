@@ -18,7 +18,7 @@ def name_path_pair(arg):
     return name, path
 
 parser.add_argument('--vcf_file',type=name_path_pair, action='append', help='input the variant caller name and the filepath to the results vcf in name:path format')
-parser.add_argument('--output', default='./',type=str, help= 'filepath to output dataframe files to')
+parser.add_argument('--output_dir', default='./',type=str, help= 'directory to output dataframe files to')
 args = parser.parse_args()
 #DEFINE FUNCTIONS
 
@@ -110,14 +110,14 @@ def vcf_to_dataframe(input_vcf, output_file):
 #MAIN
 
 #from the output file path argument get the filepath to output dataframe files to
-OUTPUT_FILE_PATH_ARG = args.output
+OUTPUT_DIR = args.output
 
 #get the caller name and input vcf filepath for each caller from the arg input
 for element in args.vcf_file:
     caller_name = element[0]
     input_vcf = element[1]
     #create a name for the output dataframe files
-    output_file_path= f'{OUTPUT_FILE_PATH_ARG}/{caller_name}_dataframe.tsv'
+    output_file_path= f'{OUTPUT_DIR}/{caller_name}_dataframe.tsv'
     print(f'writing mapped results vcf to {output_file_path}')
     #write to dataframe
     vcf_to_dataframe(input_vcf= input_vcf, output_file = output_file_path)
