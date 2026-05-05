@@ -110,7 +110,7 @@ def vcf_to_dataframe(input_vcf, output_file):
 #MAIN
 
 #from the output file path argument get the filepath to output dataframe files to
-OUTPUT_DIR = args.output
+OUTPUT_DIR = args.output_dir
 
 #get the caller name and input vcf filepath for each caller from the arg input
 for element in args.vcf_file:
