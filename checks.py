@@ -166,7 +166,7 @@ for element in args.files_list:
     caller_name = element[0]
     path_to_files = element[1]
 
-working_directory = args.working_directory
+working_directory = args.working_dir
 
 #read in the csv file list of the files to create a dictionary out of
 files_df = read_in_dataframe(filepath = f'{path_to_files}', separator = ',', header = 0)
