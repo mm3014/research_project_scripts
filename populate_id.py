@@ -44,6 +44,17 @@ def read_vcf_into_dataframe(filepath):
     df = pd.read_csv(filepath, sep = separator, skiprows=number)
     return df
 
+def add_to_header(header, statement):
+    #create a mask where True = string starts with '##INFO'
+    mask = np.char.startswith(header, '##INFO')
+    #get the indexes of the 'True'
+    indexes = np.where(mask)[0]
+    #get the last index and + 1 position
+    index_for_statement = indexes[-1]+1
+    #add the line in the header at this postion. Insert adds the string before the index given
+    header.insert(index_for_statement, statement)
+    return header
+
 def pass_only(df, column_name, keep_value):
     '''this function takes an input dataframe and filters by a specific column value'''
     filtered_df = df[df[column_name] == keep_value]
@@ -94,6 +105,8 @@ output_directory = args.output_dir
 
 #read in the header
 header_only = read_in_header(filepath)
+#add the my_id header line after the last header line starting with '##INFO'
+edited_header = add_to_header(header_only, statement = '##INFO=<ID=my_id,Number=1,Type=String,Description="A unique id created to track variants during downstream analysis">\n')
 #read in the rest of the vcf to the dataframe
 vcf_dataframe = read_vcf_into_dataframe(filepath)
 #filter the filter column to keep only 'PASS'
@@ -106,4 +119,4 @@ populated_dataframe = populate_id(input_dataframe = pass_only_df, column_name = 
 new_filename = f'{output_directory}/info_passonly.vcf'
 #export the populated vcf with its header to the original path
 print(f'writing {caller_name} updated vcf to {new_filename}')
-export_as_vcf(input_dataframe = populated_dataframe, header_only = header_only , output_filepath = new_filename)
+export_as_vcf(input_dataframe = populated_dataframe, header_only = edited_header , output_filepath = new_filename)
