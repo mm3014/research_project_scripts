@@ -1,16 +1,26 @@
-##### NEED TO MAKE THE PARENT DIR
-####COPY THE CALLER  VCF OVER TO THE CALLER_OUPUT file
+### TO RUN SCRIPT FROM COMMAND LINE
+### 1. COPY THE CALLER  VCF OVER TO THE CALLER_OUPUT file
+### 2. RUN ON THE COMMAND LINE WITH COMMAND
+###    path_to/workflow.sh path_to/project_workflow 'variant_caller_name'
 
 !/usr/bin/env bash
 
+#this is the filepath to the project workflow folder that was input via the command line when calling the workflow script
+PROJECT_WORKFLOW_FOLDER=$1
+#this is the name of the variant caller that was input via the command line when calling the workflow script
+CALLER_INPUT=$2
 ### SET UP THE WORKFLOW DIRECTORIES ###
 
-WORKING_DIR="/pathto/project_workflow"
+echo "starting"
+echo "working in directory: ${PROJECT_WORKFLOW_FOLDER}"
+echo "analysing caller: ${CALLER_INPUT}"
+
+WORKING_DIR=$PROJECT_WORKFLOW_FOLDER
 ALL_RESULTS="${WORKING_DIR}/project_results"
 CALLER_OUTPUT="${WORKING_DIR}/caller_output"
 REF_DIRECTORY="${WORKING_DIR}/ref_files"
 SCRIPTS="${WORKING_DIR}/scripts"
-CALLER="deepvariant"
+CALLER=$CALLER_INPUT
 
 #make folder for my analysis results for the specific caller
 ANALYSIS_RESULTS="${ALL_RESULTS}/${CALLER}"
