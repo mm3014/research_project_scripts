@@ -106,7 +106,7 @@ add_file_to_list "$STEP_KEY" "$INPUT"
 ### POPULATE IDS STEP ###
 
 #define the file path for the results vcf
-RESULTS_VCF="${ANALYSIS_RESULTS}/info_passonly.vcf" 
+RESULTS_VCF="${ANALYSIS_RESULTS}/populated_my_id_passonly.vcf" 
 #define the EXPECTED_OUTPUT
 EXPECTED_OUTPUT="$RESULTS_VCF"
 #define the filepath to the script to run
