@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import subprocess
 import argparse
+import csv
 
 #CREATE ARGUMENT PARSER
 parser = argparse.ArgumentParser(
@@ -190,28 +191,35 @@ count_dictionary = create_count_dictionary(dictionary = data_dictionary)
 merged_df = fetch_relevant_dataframe(dictionary = data_dictionary, key = 'merged_df')
 #make a bed file of the variants that are in the results dataframe but not in the happy output dataframe
 not_in_happy_bed = make_bed(dataframe = merged_df, output_directory = working_directory)
-#run bedtools intersect on the varints not in the happy output dataframe to see whether they intersect with the GIAB bed used by happy
+#run bedtools intersect on the variants not in the happy output dataframe to see whether they intersect with the GIAB bed used by happy
 #if they are included in the bed file they should be in the happy output
 #get the giab_bed from the data dictionary
 giab_bed = data_dictionary.get('GIAB_bed', {}).get('File', None)
 #run bed tools intersect and get a message to say whether it was successful
 intersect_message = run_intersect(filepath_sample = not_in_happy_bed, filepath_bed = giab_bed, output_directory = working_directory, bedtools_flag = '-wa')[0]
 #if the message starts with 'writing intersect output to' (this means it was successful)
+#first make row_ids an empty list. Needed for later on if statement to update merged_df
+row_ids = []
 if intersect_message.startswith('Writing intersect output to'):
     #get the path for the intersect results to read back in
-    intersect_result_filepath = intersect_message = run_intersect(filepath_sample = not_in_happy_bed, filepath_bed = giab_bed, output_directory = working_directory, bedtools_flag = '-wa')[1]
+    intersect_result_filepath = run_intersect(filepath_sample = not_in_happy_bed, filepath_bed = giab_bed, output_directory = working_directory, bedtools_flag = '-wa')[1]
+    #check if the filepath has anything in it
+    with open(intersect_result_filepath, "r") as f:
+        if f.read(1):  #tries to read first character and if it can
+            #read in the intersect result into a df
+            intersect_df = read_in_dataframe(filepath = f'{intersect_result_filepath}' , separator = '\t', header = None)
+            #get the indices from the last column which link these results to the merged dataframe
+            row_ids = intersect_df.iloc[:, -1]
+            #and update the merged dataframe at those potitions with 'investigate'
+            merged_df.loc[row_ids, 'status'] = 'investigate'
+        else:
+            print("Intersect_result.bed is empty. There aren't any variants not included in the happy dataframe which intersect with the GIAB bed")
 else:
     print(intersect_message)
-#read in the intersect results and add them to the dataframe
-intersect_df = read_in_dataframe(filepath = f'{intersect_result_filepath}' , separator = '\t', header = None)
-#get the indices from the last column which link these results to the merged dataframe
-row_ids = intersect_df.iloc[:, -1]
 
 #UPDATE MERGED DATAFRAME WITH CHECK RESULT
 #add a column to put review status as checked for any variant where '_merge' column says 'both'
 merged_df.loc[merged_df['_merge'] == 'both', 'status'] = 'checked'
-#update status column to 'investgate' for rows that did overlap with the giab bed
-merged_df.loc[row_ids, 'status'] = 'investigate'
 #update status column to 'new' for rows where '_merge'columns says right_only 
 merged_df.loc[merged_df['_merge'] == 'right_only', 'status'] = 'new'
 
@@ -223,4 +231,19 @@ not_overlap_indexes = filtered_left.difference(row_ids)
 #update df
 merged_df.loc[not_overlap_indexes, 'status'] = 'not_in_giab'
 
+#update status column to 'not_in_giab' for rows that didn't overlap with giab bed
+#first get all indexes of rows not in happy 
+filtered_left = merged_df.loc[merged_df['_merge'] == 'left_only'].index
+not_overlap_indexes = filtered_left.difference(row_ids)
+merged_df.loc[not_overlap_indexes, 'status'] = 'not_in_giab'
+
+#write out checked dataframe 
 write_dataframe_to_tsv(dataframe_to_write = merged_df, write_to = f'{working_directory}/{caller_name}_checked_dataframe.tsv', header = 0)
+
+#write out count dictionary
+with open(f'{working_directory}/counts.csv', "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["file", "total_variants"])
+    
+    for key, value in count_dictionary.items():
+        writer.writerow([key, value["total_variants"]])
