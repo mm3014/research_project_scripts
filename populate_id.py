@@ -55,11 +55,6 @@ def add_to_header(header, statement):
     header.insert(index_for_statement, statement)
     return header
 
-def pass_only(df, column_name, keep_value):
-    '''this function takes an input dataframe and filters by a specific column value'''
-    filtered_df = df[df[column_name] == keep_value]
-    return filtered_df
-
 def populate_id(input_dataframe, column_name, string):
     changed_dataframe = input_dataframe
     #create an empty list for row indexes
@@ -89,6 +84,10 @@ def populate_id(input_dataframe, column_name, string):
     changed_dataframe[column_name] = updated_column_values
     return changed_dataframe
 
+def pass_only(df, column_name, keep_values):
+    ''' this function filters a dataframe and keeps rows which match values in the specified column '''
+    return df[df[column_name].astype(str).isin(keep_values)]
+
 #export as vcf again with the header
 def export_as_vcf(input_dataframe, header_only, output_filepath):
     with open(output_filepath, "w") as out:
@@ -109,14 +108,23 @@ header_only = read_in_header(filepath)
 edited_header = add_to_header(header_only, statement = '##INFO=<ID=my_id,Number=1,Type=String,Description="A unique id created to track variants during downstream analysis">\n')
 #read in the rest of the vcf to the dataframe
 vcf_dataframe = read_vcf_into_dataframe(filepath)
-#filter the filter column to keep only 'PASS'
-pass_only_df = pass_only(df = vcf_dataframe, column_name = 'FILTER', keep_value = 'PASS')
 #populate each value in the INFO column with 'my_id={number from 1 to total number of rows}'
-populated_dataframe = populate_id(input_dataframe = pass_only_df, column_name = 'INFO', string = 'my_id=')
+populated_dataframe = populate_id(input_dataframe = vcf_dataframe, column_name = 'INFO', string = 'my_id=')
 #split the filepath by / and get the last element of the list to use as the new filename
 #current_filename = filepath.split('/')[-1]
 #construct a new filepath
-new_filename = f'{output_directory}/info_passonly.vcf'
+new_filename = f'{output_directory}/populated_my_id.vcf'
 #export the populated vcf with its header to the original path
-print(f'writing {caller_name} updated vcf to {new_filename}')
+print(f'writing {caller_name} populated vcf to {new_filename}')
 export_as_vcf(input_dataframe = populated_dataframe, header_only = edited_header , output_filepath = new_filename)
+
+
+#filter the filter column to keep only 'PASS' or '.'
+pass_only_df = pass_only(df = populated_dataframe, column_name = 'FILTER', keep_values = ['PASS', '.'])
+#split the filepath by / and get the last element of the list to use as the new filename
+#current_filename = filepath.split('/')[-1]
+#construct a new filepath
+new_filename = f'{output_directory}/populated_my_id_passonly.vcf'
+#export the populated vcf with its header to the original path
+print(f'writing {caller_name} populated pass only vcf to {new_filename}')
+export_as_vcf(input_dataframe = pass_only_df, header_only = edited_header , output_filepath = new_filename)
