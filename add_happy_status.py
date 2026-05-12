@@ -44,9 +44,9 @@ def merge_on_column(df1, df2, column):
 
 def clean_up(dataframe):
     #add a column to join query and truth results together in a final results column
-    merged_df['result'] = (merged_df['TRUTH_BD'].fillna('').astype(str) + ','+ merged_df['QUERY_BD'].fillna('').astype(str)).str.strip(',')
+    dataframe['result'] = (dataframe['TRUTH_BD'].fillna('').astype(str) + ','+ dataframe['QUERY_BD'].fillna('').astype(str)).str.strip(',')
     #get a list of unique results 
-    result_column_vals = merged_df['result'].unique()
+    result_column_vals = dataframe['result'].unique()
     #create a dictionary to map old values with new values
     replace_map = {}
     #Loop over each value in the results column
@@ -65,11 +65,7 @@ def clean_up(dataframe):
             #Store the original value and its cleaned replacement in the dictionary
             replace_map[val] = cleaned
     #apply the cleaned dictionary to the results column
-    merged_df["result"] = merged_df["result"].replace(replace_map)
-
-
-
-    
+    dataframe["result"] = dataframe["result"].replace(replace_map)
 
 
 def write_dataframe_to_tsv(dataframe_to_write, write_to):
@@ -97,6 +93,8 @@ for element in args.input:
     #unique_col_happy_vcf_dataframe = create_unique_column(input_dataframe = happy_vcf_dataframe, list_of_columns = ['#CHROM', 'POS', 'REF', 'ALT'])
     #merge the results dataframe and happy vcf dataframe on the unique columns just made
     merged_df = merge_on_column(df1 = results_dataframe, df2 = happy_vcf_dataframe, column = 'my_id')
+    #clean the dataframe up so that it only has
+    clean_up(dataframe=merged_df)
     #create file path to write dataframe to
     output_file_path= f'{OUTPUT_DIRECTORY}/{caller_name}_merged_happy_dataframe.tsv'
     #printing message
