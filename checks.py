@@ -238,7 +238,7 @@ not_overlap_indexes = filtered_left.difference(row_ids)
 merged_df.loc[not_overlap_indexes, 'status'] = 'not_in_giab'
 
 #write out checked dataframe 
-write_dataframe_to_tsv(dataframe_to_write = merged_df, write_to = f'{working_directory}/{caller_name}_checked_dataframe.tsv', header = 0)
+write_dataframe_to_tsv(dataframe_to_write = merged_df, write_to = f'{working_directory}/{caller_name}_checked_dataframe.tsv', header = True)
 
 #write out count dictionary
 with open(f'{working_directory}/counts.csv', "w", newline="") as f:
