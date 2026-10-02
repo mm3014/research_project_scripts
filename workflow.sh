@@ -19,7 +19,7 @@ WORKING_DIR=$PROJECT_WORKFLOW_FOLDER
 ALL_RESULTS="${WORKING_DIR}/project_results"
 CALLER_OUTPUT="${WORKING_DIR}/caller_output"
 REF_DIRECTORY="${WORKING_DIR}/ref_files"
-SCRIPTS="${WORKING_DIR}/scripts"
+SCRIPTS="${WORKING_DIR}/research_project_scripts/scripts"
 CALLER=$CALLER_INPUT
 
 #make folder for my analysis results for the specific caller
