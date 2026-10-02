@@ -46,6 +46,8 @@ output: [caller_name]_checked_dataframe.tsv
 
 The required file structure for the workflow to work is documented in the figure below.
 
+![Alt text](images/project_workflow.png)
+
 The required inputs are:
  
 ## In the ‘caller_output’ directory
