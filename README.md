@@ -1,3 +1,5 @@
+![Python](https://img.shields.io/badge/python-3.13.2%2B-blue)
+
 # Purpose of workflow
  
 An automated workflow which transforms variant call format (VCF) files into dataframes for data exploration. To support comparison of variant caller performance, the workflow also runs the hap.py benchmarking tool so that variants called can be benchmarked to a gold standard.
