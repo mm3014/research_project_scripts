@@ -66,15 +66,15 @@ The required inputs are:
 # How to Run
 
 1. Create a `parent_directory` for the workflow to run in.
-2. Within the `parent_directory` create a `ref_files` directory and a `caller_output_directory`.
+2. Within the `parent_directory` create a `ref_files` directory and a `caller_output' directory.
 3. Copy over vcf input files (as described in the input section above) into the `caller_output` directory.
 4. Copy over reference files (as described in the input section above) into the `ref_files` directory.
-5. Clone the scripts directory into the `parent_directory`. Ensure that this directory is called `scripts`.
+5. Clone the this directory into the `parent_directory`.
 6. Run the below command to initiate the workflow for each variant caller.
  
 ```bash
 
-path/to/scripts/workflow.sh  path/toparent_directory  'variant_caller_name'
+path/to/research_project_scripts/workflow.sh  path/to/parent_directory  'variant_caller_name'
 
 ```
 
@@ -85,7 +85,7 @@ For example, for the `deepvariant.vcf` the command would be:
  
 ```bash
 
-path/to/scripts/workflow.sh  path/to/parent_directory  'deepvariant'
+path/to/research_project_scripts/workflow.sh  path/to/parent_directory  'deepvariant'
 
 ```
  
