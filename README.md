@@ -69,7 +69,7 @@ The required inputs are:
 2. Within the `parent_directory` create a `ref_files` directory and a `caller_output' directory.
 3. Copy over vcf input files (as described in the input section above) into the `caller_output` directory.
 4. Copy over reference files (as described in the input section above) into the `ref_files` directory.
-5. Clone the this directory into the `parent_directory`.
+5. Clone this directory into the `parent_directory`.
 6. Run the below command to initiate the workflow for each variant caller.
  
 ```bash
